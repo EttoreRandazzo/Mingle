@@ -37,6 +37,7 @@ def transform_list_to_matrix_representation(data,n_elems):
 
     return result
 
+
 def sample_balanced_dataset(X,y):
     """
 
@@ -60,4 +61,97 @@ def sample_balanced_dataset(X,y):
     new_y = [0]*sampling_size + [1]*sampling_size if len(X1) > len(X0) else [1]*sampling_size + [0]*sampling_size
 
     return new_X,new_y
+
+
+def transform_input_to_individual_based(abs_input,rel_input,raw_input,speed_input):
+    """
+
+    :param abs_input: timestamps of absolute distances of all n individuals (it contains k pillar distances too) (size n*(n-1) + k*n)
+    :param rel_input: timestamps of ranking distances of all n individuals (it contains k pillar distances too) (size n*(n-1) + k*n)
+    :param raw_input: timestamps of raw distances of all n individuals (size n*(n-1))
+    :param speed_input: timestamps of speeds for all n individuals (size n)
+    :return: a dictionary of (individuals) dictionary of inputs, ex dic[individual]['absolute'] returns a dictionary of absolute distances, where
+        each key has all the timestamps regarding its key. ex dic[0]['absolute'][1] = [[1],[2],[1],..]
+        dictionary for each individual: absolute, ranking, raw, speed values
+    """
+
+    n_individuals = len(speed_input[0])
+    n_diadic_dist = n_individuals*(n_individuals-1)
+    n_pillars = (len(abs_input[0]) - n_diadic_dist) // n_individuals
+    individual_dictionary = {}
+    for i in range(n_individuals):
+        individual_dictionary[i] = {}
+        temp_dic = individual_dictionary[i]
+        temp_dic['absolute'] = {}
+        temp_dic['ranking'] = {}
+        temp_dic['raw'] = {}
+        temp_dic['speed'] = []
+
+    for abs_ts in abs_input:
+        diadic_dist = abs_ts[:n_diadic_dist]
+        pillars_dist = abs_ts[n_diadic_dist:]
+
+        considered_input = 'absolute'
+        for i in range(n_individuals):
+            personal_input = diadic_dist[(i*(n_individuals-1)):((i+1)*(n_individuals-1))]
+            other_id = 0
+            # every signal regarding another individual has its own voice in the dictionary, containing all timestamps togheter. ex ts_individual_dict[1] = [2,2,1...]
+            for sensed_signal in personal_input:
+                if other_id == i: other_id += 1
+                # I get the corresponding list
+                if other_id not in individual_dictionary[i][considered_input]: individual_dictionary[i][considered_input][other_id] = []
+                individual_dictionary[i][considered_input][other_id].append([sensed_signal])
+                other_id += 1
+
+            # we add all pillars inputs regarding this individual
+            pillars_inputs = []
+            for k in range(n_pillars):
+                pillars_inputs.append(pillars_dist[k*n_individuals + i])
+            if 'pillars' not in individual_dictionary[i][considered_input]: individual_dictionary[i][considered_input]['pillars'] = []
+            individual_dictionary[i][considered_input]['pillars'].append(pillars_inputs)
+
+    for rel_ts in rel_input:
+        diadic_dist = rel_ts[:n_diadic_dist]
+        pillars_dist = rel_ts[n_diadic_dist:]
+
+        considered_input = 'ranking'
+        for i in range(n_individuals):
+            personal_input = diadic_dist[(i*(n_individuals-1)):((i+1)*(n_individuals-1))]
+            other_id = 0
+            # every signal regarding another individual has its own voice in the dictionary, containing all timestamps togheter. ex ts_individual_dict[1] = [2,2,1...]
+            for sensed_signal in personal_input:
+                if other_id == i: other_id += 1
+                # I get the corresponding list
+                if other_id not in individual_dictionary[i][considered_input]: individual_dictionary[i][considered_input][other_id] = []
+                individual_dictionary[i][considered_input][other_id].append([sensed_signal])
+                other_id += 1
+
+            # we add all pillars inputs regarding this individual
+            pillars_inputs = []
+            for k in range(n_pillars):
+                pillars_inputs.append(pillars_dist[k*n_individuals + i])
+            if 'pillars' not in individual_dictionary[i][considered_input]: individual_dictionary[i][considered_input]['pillars'] = []
+            individual_dictionary[i][considered_input]['pillars'].append(pillars_inputs)
+
+    for raw_ts in raw_input:
+        diadic_dist = raw_ts[:]
+
+        considered_input = 'raw'
+        for i in range(n_individuals):
+            personal_input = diadic_dist[(i*(n_individuals-1)):((i+1)*(n_individuals-1))]
+            other_id = 0
+            # every signal regarding another individual has its own voice in the dictionary, containing all timestamps togheter. ex ts_individual_dict[1] = [2,2,1...]
+            for sensed_signal in personal_input:
+                if other_id == i: other_id += 1
+                # I get the corresponding list
+                if other_id not in individual_dictionary[i][considered_input]: individual_dictionary[i][considered_input][other_id] = []
+                individual_dictionary[i][considered_input][other_id].append([sensed_signal])
+                other_id += 1
+
+    for speed_ts in speed_input:
+        for i in range(n_individuals):
+            individual_dictionary[i]['speed'].append([speed_ts[i]])
+
+    return individual_dictionary
+
 
