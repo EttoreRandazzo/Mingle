@@ -5,6 +5,8 @@ from classification.nn_edges_classification import *
 from sensors import *
 import numpy as np
 
+from classification.edges_classification_independence_assumptions import *
+
 
 # CODE TO CREATE THE WORLD
 custom_world = {}
@@ -95,7 +97,7 @@ use_nn = True
 use_bs = True
 # MODEL EVALUATION
 cost_mispredictions = [1,3] # default [1,3]
-input_size = 10
+input_size = 500
 test_size = 2000
 number_repetitions = 10 # how many times we have to run this model to estimate an accurate average.
 
@@ -107,4 +109,10 @@ input_abs,input_rel,input_speed,input_raw,output = create_multiple_timestamp_raw
 
 individual_dictionary = transform_input_to_individual_based(input_abs,input_rel,input_raw,input_speed)
 
-print(individual_dictionary)
+#print(individual_dictionary)
+
+standardized_dictionary = standardize_individual_based_dictionary(individual_dictionary)
+
+#print(standardized_dictionary)
+
+extract_best_configuration_dt_independence(standardized_dictionary,output,[1,3])

@@ -155,3 +155,60 @@ def transform_input_to_individual_based(abs_input,rel_input,raw_input,speed_inpu
     return individual_dictionary
 
 
+def standardize_individual_based_dictionary(individual_dictionary,want_abs= True,want_rel= True,want_raw = False,want_speed = True):
+    """
+        we want to have a standardized dictionary, so we merge all 'absolute','ranking','raw','speed' values. We remove 'pillars' and create 'general',
+        and pairwise info becomes of course merged as well.
+
+    :param individual_dictionary: a dictionary extracted from transform_input_to_individual_based.
+    :param want_abs: boolean flag to know if we want absolute input features
+    :param want_rel: boolean flag to know if we want ranking input features
+    :param want_raw: boolean flag to know if we want raw input features
+    :param want_speed: boolean flag to know if we want speed input features
+    :return:
+    """
+
+    result_dictionary = {}
+    for key, value in individual_dictionary.items():
+        new_key_dictionary = {}
+        result_dictionary[key] = new_key_dictionary
+
+        # we take all dictionaries
+        abs_dict = value['absolute']
+        rel_dict = value['ranking']
+        raw_dict = value['raw']
+        speed_list = value['speed']
+
+        # we want a general key, and update the pairwise ones
+        # here we create the general key
+        general_data = []
+        new_key_dictionary['general'] = general_data
+        for i in range(len(speed_list)):
+            new_row = []
+            if want_abs: new_row += abs_dict['pillars'][i]
+            if want_rel: new_row += rel_dict['pillars'][i]
+            #if want_raw: new_row += raw_dict['pillar'][i]
+            if want_speed: new_row += speed_list[i]
+
+            general_data.append(new_row)
+
+        # here we create the new pairwise input data
+        for other_individual in value['absolute'].keys(): # any value would be fine, as they have the same keys
+            if other_individual == 'pillars': continue
+            actual_pair_data = []
+            new_key_dictionary[other_individual] = actual_pair_data
+
+            for i in range(len(speed_list)): # the size of the input is always the same
+                new_row = []
+                if want_abs: new_row += abs_dict[other_individual][i]
+                if want_rel: new_row += rel_dict[other_individual][i]
+                if want_raw: new_row += raw_dict[other_individual][i]
+
+                actual_pair_data.append(new_row)
+
+    return result_dictionary
+
+
+
+
+

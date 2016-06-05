@@ -1,5 +1,46 @@
 from classification.classifiers import *
 
+def create_markov_data_independence_assumption(data,order):
+    """
+
+    :param data: inputs
+    :param order: the order of the markov chain
+    :return: a new data with markov assumptions. num rows: len(data) - order.
+    """
+    if order <= 0: return data
+
+    result = {}
+    for key, value in data.items():
+        actual_dict = {}
+        result[key] = actual_dict
+
+        for key2, value2 in value.items():
+            actual_list = []
+            actual_dict[key2] = actual_list
+            for i in range(order,len(value2)):
+                row = []
+                for step in range(0,order + 1):
+                    row += value2[i-step]
+                actual_list.append(row)
+
+    return result
+
+
+def get_number_of_individuals(n_targets):
+    """
+
+    :param n_targets: the number of output targets, considering an undirected graph
+    :return: the number of individuals
+    """
+    n_individuals = 2
+    while n_individuals*(n_individuals-1) < n_targets*2 : n_individuals += 1
+
+    if n_individuals*(n_individuals-1) != n_targets*2: raise ValueError('Targets size is inconsistent: there is no natural n such that n*(n-1)/2 == len(targets[0]) AKA %d' % (n_targets))
+
+    return n_individuals
+
+
+
 def train_dts_independence(observations,targets,method='bagging'):
     """Trains a decision tree for each output
 
@@ -11,10 +52,7 @@ def train_dts_independence(observations,targets,method='bagging'):
     n_targets = len(targets[0])
     # we need to know the number of individuals n such that n*(n-1)/2 = n_targets
     # we do that iteratively
-    n_individuals = 2
-    while n_individuals*(n_individuals-1) < n_targets*2 : n_individuals += 1
-
-    if n_individuals*(n_individuals-1) != n_targets*2: raise ValueError('Targets size is inconsistent: there is no natural n such that n*(n-1)/2 == len(targets[0]) AKA %d' % (n_targets))
+    n_individuals = get_number_of_individuals(n_targets)
 
     tars = np.array(targets)
 
